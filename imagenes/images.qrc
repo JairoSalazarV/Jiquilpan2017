@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/new/imagenes">
+        <file>connect.png</file>
+        <file>disconnect.png</file>
+        <file>spray.png</file>
+    </qresource>
+</RCC>
