@@ -18,6 +18,19 @@
 #include <SD.h>
 #include "memorysaver.h"
 
+#include <Servo.h>
+
+Servo servoX;
+Servo servoY;
+
+int16_t xPos = 0;
+int16_t yPos = 0;
+int16_t xMax = 110;
+int16_t yMax = 110;
+
+int16_t zeroX = 55;
+int16_t zeroY = 60;
+
 // set pin 10 as the slave select for the digital pot:
 const int SPI_CS = 10;
 
@@ -68,6 +81,12 @@ void setup()
   myCAM.set_format(JPEG);
   myCAM.InitCAM();
   myCAM.OV2640_set_JPEG_size(OV2640_1600x1200);
+  
+  //Initialize motor's position
+  servoX.attach(3);
+  servoY.attach(6);
+  goToHomePos();
+  
 }
 
 void loop()
@@ -111,6 +130,25 @@ void loop()
         Serial.write("Start\n");
         myCAM.flush_fifo();
         break;
+      case 'L'://Left
+        xPos--;
+        servoX.write(xPos);
+        break;
+      case 'R'://Right
+        xPos++;
+        servoX.write(xPos);
+        break;
+      case 'U'://Up
+        yPos++;
+        servoY.write(yPos);
+        break;
+      case 'D'://Down
+        yPos--;
+        servoY.write(yPos);
+        break;
+      case 'Z'://Down
+        goToHomePos();
+        break;
       default:
         break;
     }
@@ -141,6 +179,53 @@ void loop()
 
 }
 
-   
+void goToHomePos()
+{
+  uint16_t origen, destino;
 
+  
+  
+  
+  
+  //X
+  destino = zeroX;
+  if( xPos != destino )
+  {
+    if( xPos < destino )
+    {
+      origen  = xPos;
+      //Destino no cambia
+    }
+    else
+    {
+      origen  = destino;
+      destino = xPos;
+    }
+    for( xPos=origen; xPos<=destino; xPos++ )
+    {
+      delay(50);
+      servoX.write(xPos);
+    }
+  }
+  //Y
+  destino = zeroY;
+  if( yPos != destino )
+  {
+    if( yPos < destino )
+    {
+      origen  = yPos;
+      //Destino no cambia
+    }
+    else
+    {
+      origen  = destino;
+      destino = yPos;
+    }
+    for( yPos=origen; yPos<=destino; yPos++ )
+    {
+      delay(50);
+      servoY.write(yPos);
+    }
+  }
+}
 
