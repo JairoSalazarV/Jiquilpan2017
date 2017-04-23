@@ -351,12 +351,20 @@ void MainWindow::sendMessageBySerial(QString msg, int len)
     }
     else
     {
-        int i;
-        for(i=1; i<=_MOTOR_STEP_LEN; i++)
+        if( msg=="U" || msg=="D" || msg=="L" || msg=="R" )
+        {
+            int i;
+            for(i=1; i<=_MOTOR_STEP_LEN; i++)
+            {
+                serialPort->write(msg.toStdString().c_str(),len);
+                serialPort->waitForBytesWritten(10);
+                QtDelay(50);
+            }
+        }
+        else
         {
             serialPort->write(msg.toStdString().c_str(),len);
-            serialPort->waitForBytesWritten(10);
-            QtDelay(50);
+            serialPort->waitForBytesWritten(50);
         }
     }
 }
