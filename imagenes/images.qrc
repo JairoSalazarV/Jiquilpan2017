@@ -3,5 +3,11 @@
         <file>connect.png</file>
         <file>disconnect.png</file>
         <file>spray.png</file>
+        <file>imageSegmentation.png</file>
+        <file>au.png</file>
+        <file>al.png</file>
+        <file>ar.png</file>
+        <file>ad.png</file>
+        <file>zero.png</file>
     </qresource>
 </RCC>

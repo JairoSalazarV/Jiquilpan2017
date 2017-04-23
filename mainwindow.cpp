@@ -5,12 +5,24 @@
 #include <QDebug>
 #include <QFile>
 #include <QTime>
+#include <QGraphicsPixmapItem>
+
+#include <QMessageBox>
 
 #define _PATH_LAST_CONN_SETT                "lastConnection.arduCAM"
+#define _PATH_REC_IMG                       "default.jpg"
+#define _PATH_PROC_IMG                      "imgProc.jpg"
 #define _FILE_NOT_EXIST                     "-1"
 #define _FILE_UNKNOW_ERROR                  "-2"
 #define _MAX_SIZE_IMAGE                     250000
 #define _SERIAL_BUFF_SIZE                   80
+#define _IMG_W                              320
+#define _IMG_H                              240
+
+#define _FLAG_PROC_COL_IDENTIFY             1
+#define _FLAG_PROC_NDVI                     2
+
+#define _MOTOR_STEP_LEN                     8
 
 QSerialPort* serialPort;
 
@@ -27,14 +39,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBoxBaud->addItems( QStringList({"9600","19200","38400","57600","256000","115200","921600"}) );
     ui->comboBoxPort->addItems( QStringList({"ttyACM0","ttyACM1","ttyACM2"}) );
 
-
-
     serialPort = new QSerialPort();
 
     loadLastConnection();
 
     flagConnected = false;
-
 }
 
 MainWindow::~MainWindow()
@@ -213,12 +222,52 @@ void MainWindow::on_actionSpray_triggered()
 
         if( numReadTotal > 500 )//Heuristic
         {
-            saveBinFile("default.jpg", receivedFileData, numReadTotal);
+            saveBinFile(_PATH_REC_IMG, receivedFileData, numReadTotal);
+
+            processImage( _PATH_REC_IMG, _FLAG_PROC_COL_IDENTIFY );
+
+            displayImage(_PATH_PROC_IMG);
         }
         qDebug() << "Received numReadTotal: " << numReadTotal;
     }
     else
         qDebug() << "SerialPort not connected";
+}
+
+void MainWindow::processImage( QString imgName, int idProc )
+{
+    //Apply the algorithm over the received image and save into _PATH_PROC_IMG
+    switch( idProc )
+    {
+        case _FLAG_PROC_COL_IDENTIFY:
+            identifyColorPixels(imgName);
+            break;
+        case _FLAG_PROC_NDVI:
+            break;
+        default:
+            break;
+    }
+}
+
+void MainWindow::identifyColorPixels( QString imgName )
+{
+    QImage img( imgName );
+    img.save(_PATH_PROC_IMG);
+}
+
+void MainWindow::displayImage(QString imgName )
+{
+    //Prepare image size
+    QPixmap itemPix(imgName);
+    itemPix = itemPix.scaled(_IMG_W-2, _IMG_H-2, Qt::IgnoreAspectRatio, Qt::FastTransformation);
+
+    //Add image to scene
+    QGraphicsScene* scene = new QGraphicsScene();
+    QGraphicsPixmapItem* item = new QGraphicsPixmapItem(itemPix);
+    scene->addItem(item);
+    ui->graphicsView->setScene(scene);
+    ui->graphicsView->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    ui->graphicsView->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
 }
 
 void MainWindow::QtDelay( unsigned int ms ){
@@ -250,5 +299,64 @@ void MainWindow::on_comboBoxResol_currentIndexChanged(int index)
         serialPort->write( QString::number(index).toStdString().c_str(), 1 );
         updateLastConnection();
         qDebug() << "Resolution changed to: " << ui->comboBoxResol->currentText();
+    }
+}
+
+void MainWindow::on_actioncolorIdentification_triggered()
+{
+    processImage( _PATH_REC_IMG, _FLAG_PROC_COL_IDENTIFY );
+
+    displayImage( _PATH_PROC_IMG );
+}
+
+void MainWindow::funcShowMsg(QString title, QString msg)
+{
+    QMessageBox yesNoMsgBox;
+    yesNoMsgBox.setWindowTitle(title);
+    yesNoMsgBox.setText(msg);
+    yesNoMsgBox.setDefaultButton(QMessageBox::Ok);
+    yesNoMsgBox.exec();
+}
+
+void MainWindow::on_pbUp_clicked()
+{
+    sendMessageBySerial("U",1);
+}
+
+void MainWindow::on_pbDown_clicked()
+{
+    sendMessageBySerial("D",1);
+}
+
+void MainWindow::on_pbRight_clicked()
+{
+    sendMessageBySerial("R",1);
+}
+
+void MainWindow::on_pbLeft_clicked()
+{
+    sendMessageBySerial("L",1);
+}
+
+void MainWindow::on_pbZero_clicked()
+{
+    sendMessageBySerial("Z",1);
+}
+
+void MainWindow::sendMessageBySerial(QString msg, int len)
+{
+    if( flagConnected == false )
+    {
+        funcShowMsg("Alert","It is not connected to SerialPort");
+    }
+    else
+    {
+        int i;
+        for(i=1; i<=_MOTOR_STEP_LEN; i++)
+        {
+            serialPort->write(msg.toStdString().c_str(),len);
+            serialPort->waitForBytesWritten(10);
+            QtDelay(50);
+        }
     }
 }
