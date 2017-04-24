@@ -8,11 +8,12 @@
 #include <QGraphicsPixmapItem>
 
 #include <QMessageBox>
+#include <QFileDialog>
 #include <math.h>
 
 #define _PATH_LAST_CONN_SETT                "lastConnection.arduCAM"
-#define _PATH_REC_IMG                       "default.jpg"
-#define _PATH_PROC_IMG                      "imgProc.jpg"
+#define _PATH_REC_IMG                       "imgReceived.jpg"
+#define _PATH_IMAGE_TO_DISPLAY              "imgToDisplay.jpg"
 #define _FILE_NOT_EXIST                     "-1"
 #define _FILE_UNKNOW_ERROR                  "-2"
 #define _MAX_SIZE_IMAGE                     250000
@@ -29,6 +30,8 @@
 #define _HIST_VER_COVER                     0.22
 #define _HIST_HORIZ_NUM                     40
 #define _HIST_HORIZ_COVER                   0.3
+
+#define _NDVI_THRESHOLD                     0.0     //[-1,1]
 
 QSerialPort* serialPort;
 
@@ -51,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     flagConnected = false;
 
-    displayImage(_PATH_REC_IMG);
+    displayImage( _PATH_IMAGE_TO_DISPLAY );
 }
 
 MainWindow::~MainWindow()
@@ -232,9 +235,9 @@ void MainWindow::on_actionSpray_triggered()
         {
             saveBinFile(_PATH_REC_IMG, receivedFileData, numReadTotal);
 
-            processImage( _PATH_REC_IMG, _FLAG_PROC_COL_IDENTIFY );
+            saveBinFile(_PATH_IMAGE_TO_DISPLAY, receivedFileData, numReadTotal);
 
-            displayImage(_PATH_PROC_IMG);
+            displayImage(_PATH_IMAGE_TO_DISPLAY);
         }
         qDebug() << "Received numReadTotal: " << numReadTotal;
     }
@@ -260,7 +263,7 @@ void MainWindow::processImage( QString imgName, int idProc )
 void MainWindow::identifyColorPixels( QString imgName )
 {
     QImage img( imgName );
-    img.save(_PATH_PROC_IMG);
+    img.save(_PATH_IMAGE_TO_DISPLAY);
 }
 
 void MainWindow::displayImage(QString imgName )
@@ -314,7 +317,7 @@ void MainWindow::on_actioncolorIdentification_triggered()
 {
     processImage( _PATH_REC_IMG, _FLAG_PROC_COL_IDENTIFY );
 
-    displayImage( _PATH_PROC_IMG );
+    displayImage( _PATH_IMAGE_TO_DISPLAY );
 }
 
 void MainWindow::funcShowMsg(QString title, QString msg)
@@ -461,12 +464,12 @@ float* MainWindow::drawVerticalHistogram( float* lstBarsLens )
     if( ui->checkBoxClearScene->isChecked() )
     {
         ui->graphicsView->scene()->clear();
-        displayImage( _PATH_REC_IMG );
+        displayImage( _PATH_IMAGE_TO_DISPLAY );
     }
 
     int numHist = _HIST_VER_NUM;//Cuantas barras
 
-    QImage img( _PATH_REC_IMG );
+    QImage img( _PATH_IMAGE_TO_DISPLAY );
     int barraW = round( (float)img.height() / (float)numHist );
     int idHist, x, y, lineIni, lineEnd, barraAcum, normAcum;
     int lstBars[numHist];
@@ -529,12 +532,12 @@ float* MainWindow::drawHorizontalHistogram( float* lstBarsLens )
     if( ui->checkBoxClearScene->isChecked() )
     {
         ui->graphicsView->scene()->clear();
-        displayImage( _PATH_REC_IMG );
+        displayImage( _PATH_IMAGE_TO_DISPLAY );
     }
 
     int numHist = _HIST_HORIZ_NUM;//Cuantas barras
 
-    QImage img( _PATH_REC_IMG );
+    QImage img( _PATH_IMAGE_TO_DISPLAY );
     int barraW = round( (float)img.width() / (float)numHist );
     int idHist, x, y, lineIni, lineEnd, barraAcum;
     int lstBars[numHist];
@@ -595,5 +598,53 @@ float* MainWindow::drawHorizontalHistogram( float* lstBarsLens )
 void MainWindow::on_actionClear_triggered()
 {
     ui->graphicsView->scene()->clear();
-    displayImage( _PATH_REC_IMG );
+    displayImage( _PATH_IMAGE_TO_DISPLAY );
+}
+
+void MainWindow::on_actionNDVI_drawing_triggered()
+{
+    QImage img( _PATH_IMAGE_TO_DISPLAY );
+    QColor tmpColor;
+    int row, col;
+    float NDVI;
+    for( row=0; row<img.height(); row++ )
+    {
+        for( col=0; col<img.width(); col++ )
+        {
+            tmpColor    = img.pixelColor( col, row );
+            NDVI        = (float)(tmpColor.red()-tmpColor.green())/(float)(tmpColor.red()+tmpColor.green());
+
+            tmpColor.setRed(0);
+            tmpColor.setGreen(0);
+            tmpColor.setBlue(0);
+            if( NDVI > _NDVI_THRESHOLD )
+            {
+                //qDebug() << "row: " << row << " col: " << col << "NDVI: " << NDVI;
+                tmpColor.setRed(NDVI*255.0);
+            }
+            img.setPixelColor(col,row,tmpColor);
+        }
+    }
+    img.save( _PATH_IMAGE_TO_DISPLAY );
+    displayImage( _PATH_IMAGE_TO_DISPLAY );
+}
+
+void MainWindow::on_actionLoad_file_triggered()
+{
+    //Select image
+    //..
+    QString auxQstring;
+    auxQstring = QFileDialog::getOpenFileName(
+                                                        this,
+                                                        tr("Select image..."),
+                                                        "./snapshots/Calib/",
+                                                        "(*.ppm *.RGB888 *.tif *.png *.jpg *.jpeg *.JPEG *.JPG *.bmp);;"
+                                                     );
+    if( auxQstring.isEmpty() ){
+        return (void)NULL;
+    }
+
+    QImage tmpImg( auxQstring );
+    tmpImg.save( _PATH_IMAGE_TO_DISPLAY );
+    displayImage( _PATH_IMAGE_TO_DISPLAY );
 }

@@ -253,9 +253,9 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionLoad_file"/>
    <addaction name="actionConnect"/>
    <addaction name="actionSpray"/>
-   <addaction name="actioncolorIdentification"/>
    <addaction name="actionVertical_histogram"/>
    <addaction name="actionHorizontal_histogram"/>
    <addaction name="actionNDVI_drawing"/>
@@ -344,6 +344,18 @@
    </property>
    <property name="toolTip">
     <string>Clear scene</string>
+   </property>
+  </action>
+  <action name="actionLoad_file">
+   <property name="icon">
+    <iconset resource="imagenes/images.qrc">
+     <normaloff>:/new/imagenes/loadImage.png</normaloff>:/new/imagenes/loadImage.png</iconset>
+   </property>
+   <property name="text">
+    <string>Load file</string>
+   </property>
+   <property name="toolTip">
+    <string>Load file</string>
    </property>
   </action>
  </widget>

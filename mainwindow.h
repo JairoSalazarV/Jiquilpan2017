@@ -72,6 +72,10 @@ private slots:
 
     void on_actionClear_triggered();
 
+    void on_actionNDVI_drawing_triggered();
+
+    void on_actionLoad_file_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
