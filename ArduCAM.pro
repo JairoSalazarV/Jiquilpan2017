@@ -32,4 +32,4 @@ HEADERS  += mainwindow.h
 FORMS    += mainwindow.ui
 
 RESOURCES += \
-    imagenes/images.qrc
+    imagenes.qrc

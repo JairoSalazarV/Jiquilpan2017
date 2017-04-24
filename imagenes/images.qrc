@@ -16,5 +16,6 @@
         <file>clear.png</file>
         <file>open.png</file>
         <file>loadImage.png</file>
+        <file>strikeArea.png</file>
     </qresource>
 </RCC>

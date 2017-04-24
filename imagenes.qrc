@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/new/prefix1">
+        <file>imagenes/strikeArea.png</file>
+        <file>imagenes/horizColor.png</file>
+        <file>imagenes/NDVI.png</file>
+        <file>imagenes/vertColor.png</file>
+        <file>imagenes/imageSegmentation.png</file>
+        <file>imagenes/spray.png</file>
+        <file>imagenes/disconnect.png</file>
+        <file>imagenes/connect.png</file>
+        <file>imagenes/loadImage.png</file>
+        <file>imagenes/open.png</file>
+        <file>imagenes/au.png</file>
+        <file>imagenes/al.png</file>
+        <file>imagenes/zero.png</file>
+        <file>imagenes/ar.png</file>
+        <file>imagenes/clear.png</file>
+        <file>imagenes/ad.png</file>
+        <file>imagenes/camera.png</file>
+    </qresource>
+</RCC>

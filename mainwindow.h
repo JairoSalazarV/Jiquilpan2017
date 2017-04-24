@@ -66,15 +66,17 @@ private slots:
 
     int getMaxHist(float* lstHistLens, int numLens );
 
-    float* drawVerticalHistogram(float *lstBarsLens );
+    float* calcVerticalHistogram(float *lstBarsLens, bool drawHist);
 
-    float* drawHorizontalHistogram( float* lstBarsLens );
+    float* calcHorizontalHistogram( float* lstBarsLens, bool drawHist);
 
     void on_actionClear_triggered();
 
     void on_actionNDVI_drawing_triggered();
 
     void on_actionLoad_file_triggered();
+
+    void on_actionstrikeArea_triggered();
 
 private:
     Ui::MainWindow *ui;

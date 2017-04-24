@@ -33,9 +33,13 @@
 
 #define _NDVI_THRESHOLD                     0.0     //[-1,1]
 
+#define _STRIKE_AREA_THRESHOLD              0.15    //(0,1)
+
 QSerialPort* serialPort;
 
 bool flagConnected;
+
+QGraphicsRectItem* strikeAreaScene;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -55,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
     flagConnected = false;
 
     displayImage( _PATH_IMAGE_TO_DISPLAY );
+
 }
 
 MainWindow::~MainWindow()
@@ -384,7 +389,7 @@ void MainWindow::on_actionVertical_histogram_triggered()
 {
     //Display histogram
     float* lstHistLens = (float*)malloc(_HIST_VER_NUM*sizeof(float));
-    lstHistLens = drawVerticalHistogram( lstHistLens );
+    lstHistLens = calcVerticalHistogram( lstHistLens, true );
 
     //Display Line
     drawMaxLine( lstHistLens, true );
@@ -394,7 +399,7 @@ void MainWindow::on_actionHorizontal_histogram_triggered()
 {
     //Display histogram
     float* lstHistLens = (float*)malloc(_HIST_HORIZ_NUM*sizeof(float));
-    lstHistLens = drawHorizontalHistogram( lstHistLens );
+    lstHistLens = calcHorizontalHistogram( lstHistLens, true );
 
     //Display Line
     drawMaxLine( lstHistLens, false );
@@ -459,7 +464,7 @@ int MainWindow::getMaxHist( float* lstHistLens, int numLens )
     return maxIndex;
 }
 
-float* MainWindow::drawVerticalHistogram( float* lstBarsLens )
+float* MainWindow::calcVerticalHistogram( float* lstBarsLens, bool drawHist )
 {
     if( ui->checkBoxClearScene->isChecked() )
     {
@@ -515,19 +520,21 @@ float* MainWindow::drawVerticalHistogram( float* lstBarsLens )
         lstBarsLens[idHist] = rectW;
 
         //qDebug() << "x: " << rectX << " y: "<<rectY << "w: " << rectW << " h: "<<rectH << " barraW: " << barraW;
-
-        QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
-        tmpRect->setRect(rectX, rectY, rectW, rectH);
-        tmpRect->setPen( QPen(Qt::black) );
-        tmpRect->setBrush( QBrush(Qt::red) );
-        ui->graphicsView->scene()->addItem(tmpRect);
+        if( drawHist == true )
+        {
+            QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
+            tmpRect->setRect(rectX, rectY, rectW, rectH);
+            tmpRect->setPen( QPen(Qt::black) );
+            tmpRect->setBrush( QBrush(Qt::red) );
+            ui->graphicsView->scene()->addItem(tmpRect);
+        }
     }
 
 
     return lstBarsLens;
 }
 
-float* MainWindow::drawHorizontalHistogram( float* lstBarsLens )
+float* MainWindow::calcHorizontalHistogram( float* lstBarsLens, bool drawHist )
 {
     if( ui->checkBoxClearScene->isChecked() )
     {
@@ -582,11 +589,14 @@ float* MainWindow::drawHorizontalHistogram( float* lstBarsLens )
         rectX = ((float)idHist*widthInScene) + (widthInScene*0.15);
         rectY = (float)ui->graphicsView->scene()->height() - rectH - 1;
 
-        QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
-        tmpRect->setRect(rectX, rectY, rectW, rectH);
-        tmpRect->setPen( QPen(Qt::black) );
-        tmpRect->setBrush( QBrush(Qt::red) );
-        ui->graphicsView->scene()->addItem(tmpRect);
+        if( drawHist == true )
+        {
+            QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
+            tmpRect->setRect(rectX, rectY, rectW, rectH);
+            tmpRect->setPen( QPen(Qt::black) );
+            tmpRect->setBrush( QBrush(Qt::red) );
+            ui->graphicsView->scene()->addItem(tmpRect);
+        }
 
         //break;
 
@@ -647,4 +657,22 @@ void MainWindow::on_actionLoad_file_triggered()
     QImage tmpImg( auxQstring );
     tmpImg.save( _PATH_IMAGE_TO_DISPLAY );
     displayImage( _PATH_IMAGE_TO_DISPLAY );
+}
+
+void MainWindow::on_actionstrikeArea_triggered()
+{
+    strikeAreaScene = new QGraphicsRectItem();
+    qreal strikeX, strikeY, strikeW, strikeH, strikeHalfLenX, strikeHalfLenY;
+    strikeHalfLenX = round((float)ui->graphicsView->scene()->width()  * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeHalfLenY = round((float)ui->graphicsView->scene()->height() * (_STRIKE_AREA_THRESHOLD/2.0));
+    //qDebug() << "strikeHalfLenX: " << strikeHalfLenX << " strikeHalfLenY: " << strikeHalfLenY;
+    strikeX = ((float)ui->graphicsView->scene()->width()/2.0)  - strikeHalfLenX;
+    strikeY = ((float)ui->graphicsView->scene()->height()/2.0) - strikeHalfLenY;
+    //qDebug() << "strikeX: " << strikeX << " strikeY: " << strikeY;
+    strikeW = 2.0*strikeHalfLenX;
+    strikeH = 2.0*strikeHalfLenY;
+    //qDebug() << "strikeW: " << strikeW << " strikeH: " << strikeH;
+    strikeAreaScene->setRect(strikeX,strikeY,strikeW,strikeH);
+    strikeAreaScene->setPen(QPen(Qt::yellow));
+    ui->graphicsView->scene()->addItem( strikeAreaScene );
 }
