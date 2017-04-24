@@ -58,6 +58,20 @@ private slots:
 
     void on_pbZero_clicked();
 
+    void drawMaxLine(float *lstHistLens, bool vertical);
+
+    void on_actionVertical_histogram_triggered();
+
+    void on_actionHorizontal_histogram_triggered();
+
+    int getMaxHist(float* lstHistLens, int numLens );
+
+    float* drawVerticalHistogram(float *lstBarsLens );
+
+    float* drawHorizontalHistogram( float* lstBarsLens );
+
+    void on_actionClear_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

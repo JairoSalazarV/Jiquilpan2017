@@ -97,7 +97,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>155</y>
+      <y>173</y>
       <width>31</width>
       <height>28</height>
      </rect>
@@ -117,7 +117,7 @@
     <property name="geometry">
      <rect>
       <x>148</x>
-      <y>190</y>
+      <y>208</y>
       <width>31</width>
       <height>28</height>
      </rect>
@@ -137,7 +137,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>190</y>
+      <y>208</y>
       <width>31</width>
       <height>28</height>
      </rect>
@@ -157,7 +157,7 @@
     <property name="geometry">
      <rect>
       <x>71</x>
-      <y>190</y>
+      <y>208</y>
       <width>31</width>
       <height>28</height>
      </rect>
@@ -177,7 +177,7 @@
     <property name="geometry">
      <rect>
       <x>110</x>
-      <y>224</y>
+      <y>242</y>
       <width>31</width>
       <height>28</height>
      </rect>
@@ -197,13 +197,42 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>140</y>
+      <y>170</y>
       <width>71</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
      <string>Servos :</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>140</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clear scene :</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBoxClearScene">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>140</y>
+      <width>31</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
@@ -227,6 +256,10 @@
    <addaction name="actionConnect"/>
    <addaction name="actionSpray"/>
    <addaction name="actioncolorIdentification"/>
+   <addaction name="actionVertical_histogram"/>
+   <addaction name="actionHorizontal_histogram"/>
+   <addaction name="actionNDVI_drawing"/>
+   <addaction name="actionClear"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
@@ -244,10 +277,10 @@
   <action name="actionSpray">
    <property name="icon">
     <iconset resource="imagenes/images.qrc">
-     <normaloff>:/new/imagenes/spray.png</normaloff>:/new/imagenes/spray.png</iconset>
+     <normaloff>:/new/imagenes/camera.png</normaloff>:/new/imagenes/camera.png</iconset>
    </property>
    <property name="text">
-    <string>Spray</string>
+    <string>Take photo</string>
    </property>
    <property name="toolTip">
     <string>Spray</string>
@@ -263,6 +296,54 @@
    </property>
    <property name="toolTip">
     <string>Color Identification</string>
+   </property>
+  </action>
+  <action name="actionVertical_histogram">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/new/imagenes/vertColor</normaloff>:/new/imagenes/vertColor</iconset>
+   </property>
+   <property name="text">
+    <string>Vertical histogram</string>
+   </property>
+   <property name="toolTip">
+    <string>Vertical histogram</string>
+   </property>
+  </action>
+  <action name="actionHorizontal_histogram">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/new/imagenes/horizColor</normaloff>:/new/imagenes/horizColor</iconset>
+   </property>
+   <property name="text">
+    <string>Horizontal histogram</string>
+   </property>
+   <property name="toolTip">
+    <string>Horizontal</string>
+   </property>
+  </action>
+  <action name="actionNDVI_drawing">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/new/imagenes/NDVI</normaloff>:/new/imagenes/NDVI</iconset>
+   </property>
+   <property name="text">
+    <string>NDVI drawing</string>
+   </property>
+   <property name="toolTip">
+    <string>NDVI drawing</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="icon">
+    <iconset resource="imagenes/images.qrc">
+     <normaloff>:/new/imagenes/clear.png</normaloff>:/new/imagenes/clear.png</iconset>
+   </property>
+   <property name="text">
+    <string>Clear</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear scene</string>
    </property>
   </action>
  </widget>

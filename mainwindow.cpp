@@ -8,6 +8,7 @@
 #include <QGraphicsPixmapItem>
 
 #include <QMessageBox>
+#include <math.h>
 
 #define _PATH_LAST_CONN_SETT                "lastConnection.arduCAM"
 #define _PATH_REC_IMG                       "default.jpg"
@@ -23,6 +24,11 @@
 #define _FLAG_PROC_NDVI                     2
 
 #define _MOTOR_STEP_LEN                     8
+
+#define _HIST_VER_NUM                       30
+#define _HIST_VER_COVER                     0.22
+#define _HIST_HORIZ_NUM                     40
+#define _HIST_HORIZ_COVER                   0.3
 
 QSerialPort* serialPort;
 
@@ -44,6 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
     loadLastConnection();
 
     flagConnected = false;
+
+    displayImage(_PATH_REC_IMG);
 }
 
 MainWindow::~MainWindow()
@@ -367,4 +375,225 @@ void MainWindow::sendMessageBySerial(QString msg, int len)
             serialPort->waitForBytesWritten(50);
         }
     }
+}
+
+void MainWindow::on_actionVertical_histogram_triggered()
+{
+    //Display histogram
+    float* lstHistLens = (float*)malloc(_HIST_VER_NUM*sizeof(float));
+    lstHistLens = drawVerticalHistogram( lstHistLens );
+
+    //Display Line
+    drawMaxLine( lstHistLens, true );
+}
+
+void MainWindow::on_actionHorizontal_histogram_triggered()
+{
+    //Display histogram
+    float* lstHistLens = (float*)malloc(_HIST_HORIZ_NUM*sizeof(float));
+    lstHistLens = drawHorizontalHistogram( lstHistLens );
+
+    //Display Line
+    drawMaxLine( lstHistLens, false );
+}
+
+void MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
+{
+    if( vertical == true )
+    {
+        int maxIndex = getMaxHist( lstHistLens, _HIST_VER_NUM );
+        qreal x1,y1;
+        qreal x2,y2;
+        float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
+        x1 = 0.0;
+        y1 = (maxIndex+1)*histW;
+        x2 = (float)ui->graphicsView->scene()->width();
+        y2 = y1;
+        QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
+        tmpLine->setLine(x1,y1,x2,y2);
+        tmpLine->setPen(QPen(Qt::yellow));
+        ui->graphicsView->scene()->addItem(tmpLine);
+    }
+    else
+    {
+        int maxIndex = getMaxHist( lstHistLens, _HIST_HORIZ_NUM );
+        qreal x1,y1;
+        qreal x2,y2;
+        float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
+        x1 = (maxIndex+1)*histW;
+        y1 = 0.0;
+        x2 = x1;
+        y2 = (float)ui->graphicsView->scene()->height();
+        QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
+        tmpLine->setLine(x1,y1,x2,y2);
+        tmpLine->setPen(QPen(Qt::yellow));
+        ui->graphicsView->scene()->addItem(tmpLine);
+    }
+}
+
+int MainWindow::getMaxHist( float* lstHistLens, int numLens )
+{
+    int i;
+    int maxIndex = 0;
+    int tmpLen, maxLen;
+    maxLen = 0;
+    for( i=0; i<numLens; i++ )
+    {
+        if( i==0 )
+            tmpLen = (lstHistLens[0]*2) + lstHistLens[1];
+        else if( i==(numLens-1) )
+            tmpLen = (lstHistLens[numLens-1]*2) + lstHistLens[numLens-2];
+        else
+            tmpLen = lstHistLens[i-1] + lstHistLens[i] + lstHistLens[i+1];
+
+        if( tmpLen >= maxLen )
+        {
+            maxLen   = tmpLen;
+            maxIndex = i;
+        }
+
+    }
+    return maxIndex;
+}
+
+float* MainWindow::drawVerticalHistogram( float* lstBarsLens )
+{
+    if( ui->checkBoxClearScene->isChecked() )
+    {
+        ui->graphicsView->scene()->clear();
+        displayImage( _PATH_REC_IMG );
+    }
+
+    int numHist = _HIST_VER_NUM;//Cuantas barras
+
+    QImage img( _PATH_REC_IMG );
+    int barraW = round( (float)img.height() / (float)numHist );
+    int idHist, x, y, lineIni, lineEnd, barraAcum, normAcum;
+    int lstBars[numHist];
+    QColor tmpColor;
+    float histMaxLen = _HIST_VER_COVER * (float)ui->graphicsView->width();//%
+    //qDebug() << "histMaxLen: " << histMaxLen;
+
+    //Get bars size
+    normAcum = 0;
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        lineIni     = (idHist*barraW);
+        lineEnd     = lineIni+barraW;
+        barraAcum   = 0;
+        for( y=lineIni; y<lineEnd; y++ )
+        {
+            for( x=0; x<img.width(); x++ )
+            {
+                tmpColor = img.pixelColor(x,y);
+                barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+            }
+        }
+        lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.width()));
+        normAcum += lstBars[idHist];
+    }
+
+    int maxHistVal = 0;
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        if( lstBars[idHist] > maxHistVal )
+            maxHistVal = lstBars[idHist];
+    }
+
+    //Normilizing bar size
+    qreal rectX,rectY,rectW,rectH;
+    qreal widthInScene = (float)_IMG_H/(float)numHist;
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        rectX = 0.0;
+        rectY = ((float)idHist*widthInScene) + (widthInScene*0.2);
+        rectW = ((float)lstBars[idHist] / (float)maxHistVal)*histMaxLen;
+        rectH = widthInScene/2.0;
+        lstBarsLens[idHist] = rectW;
+
+        //qDebug() << "x: " << rectX << " y: "<<rectY << "w: " << rectW << " h: "<<rectH << " barraW: " << barraW;
+
+        QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
+        tmpRect->setRect(rectX, rectY, rectW, rectH);
+        tmpRect->setPen( QPen(Qt::black) );
+        tmpRect->setBrush( QBrush(Qt::red) );
+        ui->graphicsView->scene()->addItem(tmpRect);
+    }
+
+
+    return lstBarsLens;
+}
+
+float* MainWindow::drawHorizontalHistogram( float* lstBarsLens )
+{
+    if( ui->checkBoxClearScene->isChecked() )
+    {
+        ui->graphicsView->scene()->clear();
+        displayImage( _PATH_REC_IMG );
+    }
+
+    int numHist = _HIST_HORIZ_NUM;//Cuantas barras
+
+    QImage img( _PATH_REC_IMG );
+    int barraW = round( (float)img.width() / (float)numHist );
+    int idHist, x, y, lineIni, lineEnd, barraAcum;
+    int lstBars[numHist];
+    QColor tmpColor;
+    float histMaxLen = _HIST_HORIZ_COVER * (float)ui->graphicsView->height();//%
+    //qDebug() << "histMaxLen: " << histMaxLen;
+
+    //Get bars size
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        lineIni     = (idHist*barraW);
+        lineEnd     = lineIni+barraW;
+        barraAcum   = 0;
+        for( x=lineIni; x<lineEnd; x++ )
+        {
+            for( y=0; y<img.height(); y++ )
+            {
+                tmpColor = img.pixelColor(x,y);
+                barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+            }
+        }
+        lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.height()));
+    }
+
+    int maxHistVal = 0;
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        if( lstBars[idHist] > maxHistVal )
+            maxHistVal = lstBars[idHist];
+    }
+
+    //Normilizing bar size
+    qreal rectX,rectY,rectW,rectH;
+    qreal widthInScene = (float)_IMG_W/(float)numHist;
+    for( idHist=0; idHist<numHist; idHist++ )
+    {
+        rectH = ((float)lstBars[idHist] / (float)maxHistVal) * histMaxLen;
+        rectW = widthInScene/2.0;
+
+        lstBarsLens[idHist] = rectH;
+
+        rectX = ((float)idHist*widthInScene) + (widthInScene*0.15);
+        rectY = (float)ui->graphicsView->scene()->height() - rectH - 1;
+
+        QGraphicsRectItem *tmpRect = new QGraphicsRectItem();
+        tmpRect->setRect(rectX, rectY, rectW, rectH);
+        tmpRect->setPen( QPen(Qt::black) );
+        tmpRect->setBrush( QBrush(Qt::red) );
+        ui->graphicsView->scene()->addItem(tmpRect);
+
+        //break;
+
+    }
+
+    return lstBarsLens;
+}
+
+void MainWindow::on_actionClear_triggered()
+{
+    ui->graphicsView->scene()->clear();
+    displayImage( _PATH_REC_IMG );
 }

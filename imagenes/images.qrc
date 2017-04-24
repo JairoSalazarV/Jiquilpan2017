@@ -9,5 +9,10 @@
         <file>ar.png</file>
         <file>ad.png</file>
         <file>zero.png</file>
+        <file>camera.png</file>
+        <file>horizColor.png</file>
+        <file>NDVI.png</file>
+        <file>vertColor.png</file>
+        <file>clear.png</file>
     </qresource>
 </RCC>
