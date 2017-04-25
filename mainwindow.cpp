@@ -25,6 +25,12 @@
 #define _FLAG_PROC_NDVI                     2
 
 #define _MOTOR_STEP_LEN                     8
+#define _MOTOR_STEP_CENTERING               1
+#define _MOTOR_STEP_DELAY                   10 //ms
+#define _MOTOR_STEP_PIXELS                  7 //pixels
+
+#define _TIMER_DELAY                        1
+#define _TIMER_UPDATE_VIEW                  1
 
 #define _HIST_VER_NUM                       30
 #define _HIST_VER_COVER                     0.22
@@ -35,9 +41,19 @@
 
 #define _STRIKE_AREA_THRESHOLD              0.15    //(0,1)
 
+#define _IMG_MIN_SIZE                       3000
+#define _IMG_MAX_SIZE                       7000
+#define _IMG_MAX_CORRUPTED                  3
+
+#define _ERROR                              -1
+#define _OK                                 1
+
+int numImgCorrupted;
+
 QSerialPort* serialPort;
 
 bool flagConnected;
+bool flagTrackinOn;
 
 QGraphicsRectItem* strikeAreaScene;
 
@@ -59,6 +75,10 @@ MainWindow::MainWindow(QWidget *parent) :
     flagConnected = false;
 
     displayImage( _PATH_IMAGE_TO_DISPLAY );
+
+    numImgCorrupted = 0;
+
+    flagTrackinOn = false;
 
 }
 
@@ -196,6 +216,11 @@ void MainWindow::loadLastConnection()
 
 void MainWindow::on_actionSpray_triggered()
 {
+    takeAPhotoSerial();
+}
+
+int MainWindow::takeAPhotoSerial()
+{
     if( flagConnected == true )
     {
 
@@ -236,18 +261,26 @@ void MainWindow::on_actionSpray_triggered()
 
         }
 
-        if( numReadTotal > 500 )//Heuristic
+        if( numReadTotal > _IMG_MIN_SIZE && numReadTotal < _IMG_MAX_SIZE )//Heuristic
         {
             saveBinFile(_PATH_REC_IMG, receivedFileData, numReadTotal);
 
             saveBinFile(_PATH_IMAGE_TO_DISPLAY, receivedFileData, numReadTotal);
 
-            displayImage(_PATH_IMAGE_TO_DISPLAY);
+            if( displayImage(_PATH_IMAGE_TO_DISPLAY) == _ERROR )
+            {
+                qDebug() << "ERROR desplaying image";
+                return _ERROR;
+            }
         }
         qDebug() << "Received numReadTotal: " << numReadTotal;
     }
     else
-        qDebug() << "SerialPort not connected";
+    {
+        funcShowMsg("Alert!","SerialPort not connected");
+        return _ERROR;
+    }
+    return _OK;
 }
 
 void MainWindow::processImage( QString imgName, int idProc )
@@ -271,10 +304,24 @@ void MainWindow::identifyColorPixels( QString imgName )
     img.save(_PATH_IMAGE_TO_DISPLAY);
 }
 
-void MainWindow::displayImage(QString imgName )
+int MainWindow::displayImage(QString imgName )
 {
     //Prepare image size
     QPixmap itemPix(imgName);
+    if( itemPix.isNull() )
+    {
+        //numImgCorrupted++;
+        qDebug() << "ERROR transfering image";
+        return _ERROR;
+    }
+    //if( numImgCorrupted >= _IMG_MAX_CORRUPTED )
+    //{
+    //    funcShowMsg("ERROR","Check the camera connection");
+    //    numImgCorrupted = 0;
+    //    flagTrackinOn = false;
+    //    return _ERROR;
+    //}
+
     itemPix = itemPix.scaled(_IMG_W-2, _IMG_H-2, Qt::IgnoreAspectRatio, Qt::FastTransformation);
 
     //Add image to scene
@@ -284,6 +331,9 @@ void MainWindow::displayImage(QString imgName )
     ui->graphicsView->setScene(scene);
     ui->graphicsView->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
     ui->graphicsView->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+
+    //numImgCorrupted = 0;
+    return _OK;
 }
 
 void MainWindow::QtDelay( unsigned int ms ){
@@ -405,18 +455,20 @@ void MainWindow::on_actionHorizontal_histogram_triggered()
     drawMaxLine( lstHistLens, false );
 }
 
-void MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
+qreal MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
 {
+    qreal POS;
     if( vertical == true )
     {
         int maxIndex = getMaxHist( lstHistLens, _HIST_VER_NUM );
         qreal x1,y1;
         qreal x2,y2;
         float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
-        x1 = 0.0;
-        y1 = (maxIndex+1)*histW;
-        x2 = (float)ui->graphicsView->scene()->width();
-        y2 = y1;
+        x1  = 0.0;
+        y1  = (maxIndex+0)*histW;
+        x2  = (float)ui->graphicsView->scene()->width();
+        y2  = y1;
+        POS = y1;
         QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
         tmpLine->setLine(x1,y1,x2,y2);
         tmpLine->setPen(QPen(Qt::yellow));
@@ -428,15 +480,17 @@ void MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
         qreal x1,y1;
         qreal x2,y2;
         float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
-        x1 = (maxIndex+1)*histW;
-        y1 = 0.0;
-        x2 = x1;
-        y2 = (float)ui->graphicsView->scene()->height();
+        x1  = (maxIndex+0)*histW;
+        y1  = 0.0;
+        x2  = x1;
+        y2  = (float)ui->graphicsView->scene()->height();
+        POS = x1;
         QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
         tmpLine->setLine(x1,y1,x2,y2);
         tmpLine->setPen(QPen(Qt::yellow));
         ui->graphicsView->scene()->addItem(tmpLine);
     }
+    return POS;
 }
 
 int MainWindow::getMaxHist( float* lstHistLens, int numLens )
@@ -494,7 +548,9 @@ float* MainWindow::calcVerticalHistogram( float* lstBarsLens, bool drawHist )
             for( x=0; x<img.width(); x++ )
             {
                 tmpColor = img.pixelColor(x,y);
-                barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+                //barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+                barraAcum += 255.0 * ((float)(tmpColor.red() - tmpColor.green()) / (float)(tmpColor.red() + tmpColor.green()));
+
             }
         }
         lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.width()));
@@ -563,7 +619,8 @@ float* MainWindow::calcHorizontalHistogram( float* lstBarsLens, bool drawHist )
             for( y=0; y<img.height(); y++ )
             {
                 tmpColor = img.pixelColor(x,y);
-                barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+                //barraAcum += abs( tmpColor.red() - tmpColor.blue() );
+                barraAcum += 255.0 * ((float)(tmpColor.red() - tmpColor.green()) / (float)(tmpColor.red() + tmpColor.green()));
             }
         }
         lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.height()));
@@ -675,4 +732,121 @@ void MainWindow::on_actionstrikeArea_triggered()
     strikeAreaScene->setRect(strikeX,strikeY,strikeW,strikeH);
     strikeAreaScene->setPen(QPen(Qt::yellow));
     ui->graphicsView->scene()->addItem( strikeAreaScene );
+}
+
+int MainWindow::on_actionTracking_triggered()
+{
+    int newPhoto = takeAPhotoSerial();
+    if( newPhoto == _ERROR )
+    {
+        qDebug() << "IMG ERROR on tracking";
+        return _ERROR;
+    }
+    ui->graphicsView->update();
+    QtDelay(_TIMER_UPDATE_VIEW);
+
+    //Display histogram
+    float* histRows = (float*)malloc(_HIST_VER_NUM*sizeof(float));
+    float* histCols = (float*)malloc(_HIST_HORIZ_NUM*sizeof(float));
+
+    histRows = calcVerticalHistogram( histRows, false );
+    histCols = calcHorizontalHistogram( histCols, false );
+
+    qreal x = drawMaxLine( histCols, false );
+    qreal y = drawMaxLine( histRows, true );
+
+    //
+    //Centering camera
+    //
+    if( centeringCamera(x,y) == _ERROR )
+        return _ERROR;
+
+
+    return _OK;
+}
+
+int MainWindow::centeringCamera(qreal x, qreal y)
+{
+    //Get strike-area middle
+    strikeAreaScene = new QGraphicsRectItem();
+    qreal strikeHalfLenX, strikeHalfLenY;
+    qreal strikeX, strikeY;
+    qreal errorX, errorY;
+    strikeHalfLenX = round((float)ui->graphicsView->scene()->width()  * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeHalfLenY = round((float)ui->graphicsView->scene()->height() * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeX = (float)ui->graphicsView->scene()->width()/2.0;
+    strikeY = (float)ui->graphicsView->scene()->height()/2.0;
+    errorX  = x - strikeX;
+    errorY  = y - strikeY;
+
+    //
+    //Centering
+    //
+    int i;
+    qreal absError;
+
+    //x-axis
+    absError = abs( errorX );
+    if( absError > strikeHalfLenX )
+    {
+        int stepsX = floor( absError / (float)_MOTOR_STEP_PIXELS );
+        qDebug() << "stepsX: " << stepsX;
+        for( i=0; i<stepsX; i++ )
+        {
+            if( errorX > 0 )
+                motorJumpToThe( "L", _MOTOR_STEP_CENTERING );
+            else
+                motorJumpToThe( "R", _MOTOR_STEP_CENTERING );
+
+        }
+    }
+
+    //y-axis
+    absError = abs( errorY );
+    if( absError > strikeHalfLenY )
+    {
+        int stepsY = floor( absError / (float)_MOTOR_STEP_PIXELS );
+        qDebug() << "stepsY: " << stepsY;
+        for( i=0; i<stepsY; i++ )
+        {
+            if( errorY > 0 )
+                motorJumpToThe( "D", _MOTOR_STEP_CENTERING );
+            else
+                motorJumpToThe( "U", _MOTOR_STEP_CENTERING );
+
+        }
+    }
+
+    //
+    //Refresh image
+    //
+    QtDelay(_TIMER_UPDATE_VIEW);
+    takeAPhotoSerial();
+
+    return _OK;
+
+}
+
+void MainWindow::motorJumpToThe( QString side, int degrees )
+{
+    int i;
+    for( i=0; i<degrees; i++ )
+    {
+        serialPort->write( side.toStdString().c_str(), 1 );
+        QtDelay(_MOTOR_STEP_DELAY);
+    }
+}
+
+void MainWindow::on_actionTraking_timer_triggered()
+{
+    while(numImgCorrupted < _IMG_MAX_CORRUPTED )
+    {
+        if( on_actionTracking_triggered() == _ERROR )
+            numImgCorrupted++;
+        else
+            numImgCorrupted = 0;
+        QtDelay( _TIMER_DELAY );
+    }
+    flagTrackinOn = false;
+    numImgCorrupted = 0;
 }

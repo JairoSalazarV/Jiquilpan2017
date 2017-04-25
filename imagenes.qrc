@@ -18,5 +18,7 @@
         <file>imagenes/ad.png</file>
         <file>imagenes/camera.png</file>
         <file>imagenes/arduCAM.jpeg</file>
+        <file>imagenes/tracking.png</file>
+        <file>imagenes/digitalTimer.png</file>
     </qresource>
 </RCC>

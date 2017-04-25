@@ -181,9 +181,14 @@ void loop()
 
 void goToHomePos()
 {
-  uint16_t origen, destino;
+  uint16_t origen, destino, i;
 
-  
+  xPos = 0;
+  yPos = 0;
+  servoX.write(xPos);
+  delay(100);
+  servoY.write(yPos);
+  delay(100);
   
   
   

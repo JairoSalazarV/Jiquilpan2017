@@ -30,11 +30,13 @@ private slots:
 
     void on_actionSpray_triggered();
 
+    int takeAPhotoSerial();
+
     void processImage(QString imgName , int idProc );
 
     void identifyColorPixels(QString imgName);
 
-    void displayImage(QString imgName );
+    int displayImage(QString imgName );
 
     void QtDelay( unsigned int ms );
 
@@ -58,7 +60,7 @@ private slots:
 
     void on_pbZero_clicked();
 
-    void drawMaxLine(float *lstHistLens, bool vertical);
+    qreal drawMaxLine(float *lstHistLens, bool vertical);
 
     void on_actionVertical_histogram_triggered();
 
@@ -77,6 +79,14 @@ private slots:
     void on_actionLoad_file_triggered();
 
     void on_actionstrikeArea_triggered();
+
+    int on_actionTracking_triggered();
+
+    int centeringCamera(qreal x, qreal y);
+
+    void motorJumpToThe( QString side, int degrees );
+
+    void on_actionTraking_timer_triggered();
 
 private:
     Ui::MainWindow *ui;

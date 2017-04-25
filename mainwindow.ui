@@ -265,6 +265,8 @@
    <addaction name="actionstrikeArea"/>
    <addaction name="actionNDVI_drawing"/>
    <addaction name="actionClear"/>
+   <addaction name="actionTracking"/>
+   <addaction name="actionTraking_timer"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
@@ -288,7 +290,7 @@
     <string>Take photo</string>
    </property>
    <property name="toolTip">
-    <string>Spray</string>
+    <string>Snapshot</string>
    </property>
   </action>
   <action name="actioncolorIdentification">
@@ -373,6 +375,30 @@
    </property>
    <property name="toolTip">
     <string>Show strike-area</string>
+   </property>
+  </action>
+  <action name="actionTracking">
+   <property name="icon">
+    <iconset resource="imagenes.qrc">
+     <normaloff>:/new/prefix1/imagenes/tracking.png</normaloff>:/new/prefix1/imagenes/tracking.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tracking</string>
+   </property>
+   <property name="toolTip">
+    <string>Tracking</string>
+   </property>
+  </action>
+  <action name="actionTraking_timer">
+   <property name="icon">
+    <iconset resource="imagenes.qrc">
+     <normaloff>:/new/prefix1/imagenes/digitalTimer.png</normaloff>:/new/prefix1/imagenes/digitalTimer.png</iconset>
+   </property>
+   <property name="text">
+    <string>Traking timer</string>
+   </property>
+   <property name="toolTip">
+    <string>Traking timer</string>
    </property>
   </action>
  </widget>
