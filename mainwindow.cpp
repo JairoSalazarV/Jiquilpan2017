@@ -73,8 +73,8 @@ void MainWindow::on_actionConnect_triggered()
     if( flagConnected == true )
     {
         serialPort->close();
-        ui->mainToolBar->actions().at(0)->setIcon(QIcon(":/new/imagenes/connect.png"));
-        ui->mainToolBar->actions().at(0)->setToolTip("Connect");
+        ui->mainToolBar->actions().at(1)->setIcon(QIcon(":/new/prefix1/imagenes/connect.png"));
+        ui->mainToolBar->actions().at(1)->setToolTip("Connect");
         flagConnected = false;
         qDebug() << "serialPort close()";
     }
@@ -90,8 +90,8 @@ void MainWindow::on_actionConnect_triggered()
         {
             qDebug() << "Connected to ArduCAM Successfully";
             flagConnected = true;
-            ui->mainToolBar->actions().at(0)->setIcon(QIcon(":/new/imagenes/disconnect.png"));
-            ui->mainToolBar->actions().at(0)->setToolTip("Disconnect");
+            ui->mainToolBar->actions().at(1)->setIcon(QIcon(":/new/prefix1/imagenes/disconnect.png"));
+            ui->mainToolBar->actions().at(1)->setToolTip("Disconnect");
 
             //Save last connection
             updateLastConnection();
@@ -101,9 +101,9 @@ void MainWindow::on_actionConnect_triggered()
 
             //Red messages from arduino if existes
             QString tmp;
-            tmp = serialPortReadLine(20);
+            tmp = serialPortReadLine(10);
             if( !tmp.isEmpty() )qDebug() << tmp;
-            tmp = serialPortReadLine(20);
+            tmp = serialPortReadLine(10);
             if( !tmp.isEmpty() )qDebug() << tmp;
         }
         else

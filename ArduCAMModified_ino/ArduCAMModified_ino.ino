@@ -85,7 +85,7 @@ void setup()
   //Initialize motor's position
   servoX.attach(3);
   servoY.attach(6);
-  goToHomePos();
+  //goToHomePos();
   
 }
 

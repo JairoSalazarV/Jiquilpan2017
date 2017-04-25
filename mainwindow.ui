@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>ArduCAM</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="imagenes.qrc">
+    <normaloff>:/new/prefix1/imagenes/arduCAM.jpeg</normaloff>:/new/prefix1/imagenes/arduCAM.jpeg</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QComboBox" name="comboBoxResol">
     <property name="geometry">
