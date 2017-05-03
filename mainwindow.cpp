@@ -463,10 +463,10 @@ qreal MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
         int maxIndex = getMaxHist( lstHistLens, _HIST_VER_NUM );
         qreal x1,y1;
         qreal x2,y2;
-        float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
+        float histW = (float)_IMG_H / (float)_HIST_VER_NUM;
         x1  = 0.0;
         y1  = (maxIndex+0)*histW;
-        x2  = (float)ui->graphicsView->scene()->width();
+        x2  = (float)_IMG_W;
         y2  = y1;
         POS = y1;
         QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
@@ -479,17 +479,18 @@ qreal MainWindow::drawMaxLine(float* lstHistLens, bool vertical)
         int maxIndex = getMaxHist( lstHistLens, _HIST_HORIZ_NUM );
         qreal x1,y1;
         qreal x2,y2;
-        float histW = (float)ui->graphicsView->scene()->height() / (float)_HIST_VER_NUM;
+        float histW = (float)_IMG_H / (float)_HIST_VER_NUM;
         x1  = (maxIndex+0)*histW;
         y1  = 0.0;
         x2  = x1;
-        y2  = (float)ui->graphicsView->scene()->height();
+        y2  = (float)_IMG_H;
         POS = x1;
         QGraphicsLineItem* tmpLine = new QGraphicsLineItem();
         tmpLine->setLine(x1,y1,x2,y2);
         tmpLine->setPen(QPen(Qt::yellow));
         ui->graphicsView->scene()->addItem(tmpLine);
     }
+
     return POS;
 }
 
@@ -513,7 +514,7 @@ int MainWindow::getMaxHist( float* lstHistLens, int numLens )
             maxLen   = tmpLen;
             maxIndex = i;
         }
-
+        //qDebug() << i << ".- tmpLen: " << tmpLen;
     }
     return maxIndex;
 }
@@ -554,6 +555,7 @@ float* MainWindow::calcVerticalHistogram( float* lstBarsLens, bool drawHist )
             }
         }
         lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.width()));
+        lstBars[idHist] = ( lstBars[idHist] > 0 )?lstBars[idHist]:0;
         normAcum += lstBars[idHist];
     }
 
@@ -624,6 +626,8 @@ float* MainWindow::calcHorizontalHistogram( float* lstBarsLens, bool drawHist )
             }
         }
         lstBars[idHist] = ((float)barraAcum / (float)(barraW*img.height()));
+        lstBars[idHist] = ( lstBars[idHist] > 0 )?lstBars[idHist]:0;
+        //qDebug() << "lstBars: "<<lstBars[idHist];
     }
 
     int maxHistVal = 0;
@@ -644,7 +648,7 @@ float* MainWindow::calcHorizontalHistogram( float* lstBarsLens, bool drawHist )
         lstBarsLens[idHist] = rectH;
 
         rectX = ((float)idHist*widthInScene) + (widthInScene*0.15);
-        rectY = (float)ui->graphicsView->scene()->height() - rectH - 1;
+        rectY = (float)_IMG_H - rectH - 1;
 
         if( drawHist == true )
         {
@@ -719,12 +723,14 @@ void MainWindow::on_actionLoad_file_triggered()
 void MainWindow::on_actionstrikeArea_triggered()
 {
     strikeAreaScene = new QGraphicsRectItem();
+
     qreal strikeX, strikeY, strikeW, strikeH, strikeHalfLenX, strikeHalfLenY;
-    strikeHalfLenX = round((float)ui->graphicsView->scene()->width()  * (_STRIKE_AREA_THRESHOLD/2.0));
-    strikeHalfLenY = round((float)ui->graphicsView->scene()->height() * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeHalfLenX = round((float)_IMG_W * ((float)_STRIKE_AREA_THRESHOLD/2.0));
+    strikeHalfLenY = round((float)_IMG_H * ((float)_STRIKE_AREA_THRESHOLD/2.0));
     //qDebug() << "strikeHalfLenX: " << strikeHalfLenX << " strikeHalfLenY: " << strikeHalfLenY;
-    strikeX = ((float)ui->graphicsView->scene()->width()/2.0)  - strikeHalfLenX;
-    strikeY = ((float)ui->graphicsView->scene()->height()/2.0) - strikeHalfLenY;
+
+    strikeX = ((float)_IMG_W/2.0)  - strikeHalfLenX;
+    strikeY = ((float)_IMG_H/2.0) - strikeHalfLenY;
     //qDebug() << "strikeX: " << strikeX << " strikeY: " << strikeY;
     strikeW = 2.0*strikeHalfLenX;
     strikeH = 2.0*strikeHalfLenY;
@@ -772,10 +778,10 @@ int MainWindow::centeringCamera(qreal x, qreal y)
     qreal strikeHalfLenX, strikeHalfLenY;
     qreal strikeX, strikeY;
     qreal errorX, errorY;
-    strikeHalfLenX = round((float)ui->graphicsView->scene()->width()  * (_STRIKE_AREA_THRESHOLD/2.0));
-    strikeHalfLenY = round((float)ui->graphicsView->scene()->height() * (_STRIKE_AREA_THRESHOLD/2.0));
-    strikeX = (float)ui->graphicsView->scene()->width()/2.0;
-    strikeY = (float)ui->graphicsView->scene()->height()/2.0;
+    strikeHalfLenX = round((float)_IMG_W  * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeHalfLenY = round((float)_IMG_H * (_STRIKE_AREA_THRESHOLD/2.0));
+    strikeX = (float)_IMG_W/2.0;
+    strikeY = (float)_IMG_H/2.0;
     errorX  = x - strikeX;
     errorY  = y - strikeY;
 
