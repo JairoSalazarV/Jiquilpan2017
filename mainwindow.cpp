@@ -1,3 +1,6 @@
+// sudo apt-get install libqt4-dev libqt4-dev-bin libqt4-opengl-dev libqtwebkit-dev qt4-linguist-tools qt4-qmake
+
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -66,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->comboBoxResol->addItems(QStringList({"160x120","176x144","320x240","352x288","640x480","800x600","1024x768","1280x1024","1600x1200"}));
     ui->comboBoxBaud->addItems( QStringList({"9600","19200","38400","57600","256000","115200","921600"}) );
-    ui->comboBoxPort->addItems( QStringList({"ttyACM0","ttyACM1","ttyACM2"}) );
+    ui->comboBoxPort->addItems( QStringList({"ttyACM0","ttyACM1","ttyACM2","ttyACM3","ttyAC4","ttyACM5","ttyACM6","ttyACM7"}) );
 
     serialPort = new QSerialPort();
 
@@ -648,7 +651,11 @@ float* MainWindow::calcHorizontalHistogram( float* lstBarsLens, bool drawHist )
         lstBarsLens[idHist] = rectH;
 
         rectX = ((float)idHist*widthInScene) + (widthInScene*0.15);
-        rectY = (float)_IMG_H - rectH - 1;
+        rectX = (rectX<0)?0:rectX;
+        rectX = (rectX>_IMG_W)?_IMG_W:rectX;
+        rectY = (float)_IMG_H - rectH - 3;
+        rectY = (rectY<0)?0:rectY;
+        rectY = (rectY>_IMG_H)?_IMG_H:rectY;
 
         if( drawHist == true )
         {
